@@ -42,33 +42,33 @@ scanf_msg endp
 ; Expects:   There is the mass "message"
 ; Destroys:  BX
 ;============================================
-video_prnt_msg proc
-               push bx  
-               lea  bx, message	       
-	       call strlen
-	       pop  bx
+video_prnt_msg 	proc
+               	push bx  
+               	lea  bx, message	       
+	       		call strlen
+	       		pop  bx
 	       
-	       call call_cord_msg
+	       		call call_cord_msg
 	       
-	       mov si, bx ; si = begin massege coordinate
-	       lea bx, message
+	       		mov si, bx ; si = begin massege coordinate
+	       		lea bx, message
 	       
-	       $$video_prnt_msg_loop: push bx
+	       		$$video_prnt_msg_loop: 	push bx
 	       
-	                              mov bx, [bx]
-				      cmp bl, 24h
-				      je $$end_video_prnt_msg_loop
+	                              		mov bx, [bx]
+				      					cmp bl, 24h
+				      					je $$end_video_prnt_msg_loop
 				      
-				      mov byte ptr es:[si], bl
-				      add si, 2
+				      					mov byte ptr es:[si], bl
+				      					add si, 2
 				      
-				      pop bx
-				      add bx, 1
-				      jmp $$video_prnt_msg_loop
+				      					pop bx
+				      					add bx, 1
+				      					jmp $$video_prnt_msg_loop
 	       
-	       $$end_video_prnt_msg_loop: pop bx 
-               ret
-video_prnt_msg endp
+	       		$$end_video_prnt_msg_loop: pop bx 
+               	ret
+video_prnt_msg 	endp
 ;============================================
 
 
@@ -81,30 +81,30 @@ video_prnt_msg endp
 ; Expects:   None
 ; Destroys:  AX, CX, DX, SI
 ;============================================
-call_cord_msg proc 
+call_cord_msg 	proc 
 	    
-              call calc_crd
+              	call calc_crd
 	      
-	      sub al, 2
-	      xor ah, ah
-	      mov cx, 80
-	      mul cx
-	      add bx, ax
+	      		sub al, 2
+	      		xor ah, ah
+	      		mov cx, 80
+	      		mul cx
+	      		add bx, ax
 	      
-	      add bx, 3
+	      		add bx, 3
 	
-	      mov si, bx ; si = coordinate begin msg
-	      mov ax, bx ; ax = coordinate begin msg
-	      mov bx, 2  
-	      div bx     ; ax = ax/2
-	      cmp dx, 1  ; compare the remainder of the division with 1
+	      		mov si, bx ; si = coordinate begin msg
+	      		mov ax, bx ; ax = coordinate begin msg
+	      		mov bx, 2  
+	      		div bx     ; ax = ax/2
+	      		cmp dx, 1  ; compare the remainder of the division with 1
 	      
-	      je  $$plus_coord_msg
-	      jmp $$not_plus_coord_msg
+	      		je  $$plus_coord_msg
+	      		jmp $$not_plus_coord_msg
 	      
-	      $$plus_coord_msg:     inc si     ; si = si + 1
-	      $$not_plus_coord_msg: mov bx, si ; bx = new coordinate begin msg
+	      		$$plus_coord_msg:     	inc si     ; si = si + 1
+	      		$$not_plus_coord_msg: 	mov bx, si ; bx = new coordinate begin msg
 	         
-              ret
-call_cord_msg endp
+              	ret
+call_cord_msg 	endp
 ;============================================

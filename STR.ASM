@@ -9,22 +9,19 @@
 strlen proc
        mov cx, 0
        
-       $$strlen_loop: push bx
+       $$strlen_loop:       push bx
        
-                      mov bx, [bx]
+                            mov bx, [bx]
 		      
-		      cmp bl, 24h
-		      je  $$end_strlen_loop
+		              cmp bl, 24h
+		              je  $$end_strlen_loop
 		      
-                      inc cx
-                      pop bx
-		      inc bx
+                            inc cx
+                            pop bx
+		              inc bx
 		      
-		      jmp $$strlen_loop
-		      
-		      
-       $$end_strlen_loop: pop bx
-       
+		              jmp $$strlen_loop	      
+       $$end_strlen_loop:   pop bx    
        ret
 strlen endp
 ;============================================
@@ -45,28 +42,26 @@ strcmp proc
        dec  bx
        dec  si
        push bx si
-       $$strcmp_loop: pop  si bx
-                      inc  bx
-		      inc  si
-                      push bx si
+       $$strcmp_loop:       pop  si bx
+                            inc  bx
+		              inc  si
+                            push bx si
                       
-                      mov bx, [bx]
-		      mov cx, [si]
+                            mov bx, [bx]
+		              mov cx, [si]
 		      
-		      cmp cl, 24h
-		      je $$end_strcmp_loop
+		              cmp cl, 24h
+		              je $$end_strcmp_loop
 		      
-		      cmp bl, 24h
-		      je $$end_strcmp_loop
+		              cmp bl, 24h
+		              je $$end_strcmp_loop
 		      
-		      cmp bl, cl
-		      je  $$strcmp_loop
-		      jmp $$end_strcmp_loop
+		              cmp bl, cl
+		              je  $$strcmp_loop
+		              jmp $$end_strcmp_loop
 		      
-       $$end_strcmp_loop: sub cl, bl
-       
+       $$end_strcmp_loop:   sub cl, bl
        pop si bx
-       
        ret
 strcmp endp
 ;===========================================

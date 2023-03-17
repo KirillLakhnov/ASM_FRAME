@@ -1,4 +1,4 @@
-Turbo Assembler	 Version 4.1	    03/13/23 09:21:09	    Page 1
+Turbo Assembler	 Version 4.1	    03/13/23 19:01:41	    Page 1
 frm.asm
 
 
@@ -17,831 +17,722 @@ frm.asm
      12				     ; Destroys:  AX
      13				     ;===========================================
      14				     EXIT macro
-     15					  nop
-     16
-     17					  mov ax, 4c00h	; exit (0)
-     18					  int 21h
-     19
-     20					  nop
-     21					  endm
-     22				     ;===========================================
-     23
-     24
+     15
+     16					  mov ax, 4c00h	; exit (0)
+     17					  int 21h
+     18
+     19					  endm
+     20				     ;===========================================
+     21
+     22
+     23				     ;===========================================
+     24				     ; Clear video memory
      25				     ;===========================================
-     26				     ; Clear video memory
-     27				     ;===========================================
-     28				     ; Entry:	  None
-     29				     ; Exit:	  None
-     30				     ; Expects:	  None
-     31				     ; Destroys:  None
-     32				     ;===========================================
-     33				     CLEAR_VIDEO macro
-     34						 nop
-     35
-     36						 push bx
-     37						 push cx
-     38
-     39						 mov  bx, 0b800h
-     40						 mov  es, bx
+     26				     ; Entry:	  None
+     27				     ; Exit:	  None
+     28				     ; Expects:	  None
+     29				     ; Destroys:  None
+     30				     ;===========================================
+     31				     CLEAR_VIDEO macro
+     32
+     33						     push bx cx
+     34
+     35						     mov  bx, 0b800h
+     36						     mov  es, bx
+     37
+     38						     mov  cx, 2001
+     39						     $$clear_byte:   mov bx, cx
+     40											     add bx, bx
      41
-     42						 mov  cx, 2001
-     43						 $$clear_byte: mov bx, cx
-     44							       add bx, bx
-     45
-     46							       mov byte	ptr es:[bx], 20h
-     47							       loop $$clear_byte
-     48						  pop bx
-     49						  pop cx
+     42										     mov byte ptr es:[bx], 20h
+     43											     inc bx
+     44											     mov byte ptr es:[bx], 07h
+     45										     loop $$clear_byte
+     46						     pop bx cx
+     47
+     48						     endm
+     49				     ;===========================================
      50
-     51						  nop
-     52						  endm
-     53				     ;===========================================
-     54
-     55
-     56				     ;===========================================
-     57				     ; Recording to video memory
-Turbo Assembler	 Version 4.1	    03/13/23 09:21:09	    Page 2
+     51
+     52				     ;===========================================
+     53				     ; Recording to video memory
+     54				     ;===========================================
+     55				     ; Entry:	  None
+     56				     ; Exit:	  SI = SI + 1
+     57				     ; Expects:	  ES = 0b800h
+Turbo Assembler	 Version 4.1	    03/13/23 19:01:41	    Page 2
 frm.asm
 
 
 
-     58				     ;===========================================
-     59				     ; Entry:	  None
-     60				     ; Exit:	  SI = SI + 1
-     61				     ; Expects:	  ES = 0b800h
-     62				     ;		  BL = symbol
-     63				     ;		  AH = color
-     64				     ; Destroys:  None
-     65				     ;===========================================
-     66				     REC_VIDEO macro
-     67					       nop
-     68
-     69					       mov byte	ptr es:[si], bl
-     70					       inc si
-     71					       mov byte	ptr es:[si], ah
-     72
-     73					       nop
-     74					       endm
-     75				     ;===========================================
-     76
-     77
-     78	0100  50 55 8B EC C7 46	02+  Start:  push 40  ;	x
-     79	      0028 5D
-     80	010A  50 55 8B EC C7 46	02+	     push 7   ;	y
-     81	      0007 5D
-     82	0114  50 55 8B EC C7 46	02+	     push 10   ; height
-     83	      000A 5D
-     84	011E  50 55 8B EC C7 46	02+	     push 4eh ;	color
-     85	      004E 5D
-     86	0128  50 55 8B EC C7 46	02+	     push 1   ;	style
-     87	      0001 5D
-     88
-     89	0132  E8 0007			     call draw_frame
+     58				     ;		  BL = symbol
+     59				     ;		  AH = color
+     60				     ; Destroys:  None
+     61				     ;===========================================
+     62				     REC_VIDEO	     macro
+     63
+     64						     mov byte ptr es:[si], bl
+     65						     inc si
+     66						     mov byte ptr es:[si], ah
+     67
+     68						     endm
+     69				     ;===========================================
+     70
+     71
+     72	0100  50 55 8B EC C7 46	02+  Start:  push 30  ;	x
+     73	      001E 5D
+     74	010A  50 55 8B EC C7 46	02+	     push 7   ;	y
+     75	      0007 5D
+     76	0114  50 55 8B EC C7 46	02+	     push 10  ;	height
+     77	      000A 5D
+     78	011E  50 55 8B EC C7 46	02+	     push 4fh ;	color
+     79	      004F 5D
+     80	0128  50 55 8B EC C7 46	02+	     push 2   ;	style
+     81	      0002 5D
+     82
+     83	0132  E8 0005			     call draw_frame
+     84
+     85					     EXIT
+1    86
+1    87	0135  B8 4C00			  mov ax, 4c00h	; exit (0)
+1    88	0138  CD 21			  int 21h
+1    89
      90
-     91					     EXIT
-1    92	0135  90			  nop
-1    93
-1    94	0136  B8 4C00			  mov ax, 4c00h	; exit (0)
-1    95	0139  CD 21			  int 21h
-1    96
-1    97	013B  90			  nop
-     98
-     99
-    100				     ;============================================
-    101				     ; Draw frame
-    102				     ;============================================
-    103				     ; Entry:	  p1 = X-COORDINATE upper left corner
-    104				     ;		  p2 = Y-COORDINATE upper left corner
-    105				     ;		  p3 = HEIGTH frame
-    106				     ;		  p4 = COLOR  frame
-    107				     ;		  p6 = STYLE  frame
-    108				     ; Exit:	  None
-    109				     ; Expects:	  Screen size equals 25*80
-    110				     ;		  ES = 0b800h
-    111				     ;		  There	is the mass "frame_styles"
-    112				     ;		  There	is the mass "message"
-    113				     ; Destroys:  AX, BX, CX, SI, DI, BP
-    114				     ;============================================
-Turbo Assembler	 Version 4.1	    03/13/23 09:21:09	    Page 3
+     91				     ;============================================
+     92				     ; Draw frame
+     93				     ;============================================
+     94				     ; Entry:	  p1 = X-COORDINATE upper left corner
+     95				     ;		      p2 = Y-COORDINATE	upper left corner
+     96				     ;		  p3 = HEIGTH frame
+     97				     ;		  p4 = COLOR  frame
+     98				     ;		  p6 = STYLE  frame
+     99				     ; Exit:	  None
+    100				     ; Expects:	  Screen size equals 25*80
+    101				     ;		  ES = 0b800h
+    102				     ;		  There	is the mass "frame_styles"
+    103				     ;		  There	is the mass "message"
+    104				     ; Destroys:  AX, BX, CX, SI, DI, BP
+    105				     ;============================================
+    106	013A			     draw_frame	 proc
+    107						 CLEAR_VIDEO
+1   108
+1   109	013A  53 51				     push bx cx
+1   110
+1   111	013C  BB B800				     mov  bx, 0b800h
+1   112	013F  8E C3				     mov  es, bx
+1   113
+1   114	0141  B9 07D1				     mov  cx, 2001
+Turbo Assembler	 Version 4.1	    03/13/23 19:01:41	    Page 3
 frm.asm
 
 
 
-    115	013C			     draw_frame	 proc
-    116						 CLEAR_VIDEO
-1   117	013C  90				 nop
-1   118
-1   119	013D  53				 push bx
-1   120	013E  51				 push cx
-1   121
-1   122	013F  BB B800				 mov  bx, 0b800h
-1   123	0142  8E C3				 mov  es, bx
-1   124
-1   125	0144  B9 07D1				 mov  cx, 2001
-1   126	0147  8B D9				 $$clear_byte: mov bx, cx
-1   127	0149  03 DB					       add bx, bx
-1   128
-1   129	014B  26: C6 07	20				       mov byte	ptr es:[bx], 20h
-1   130	014F  E2 F6					       loop $$clear_byte
-1   131	0151  5B				  pop bx
-1   132	0152  59				  pop cx
-1   133
-1   134	0153  90				  nop
-    135
-    136	0154  55				 push bp
-    137	0155  8B EC				 mov  bp, sp
+1   115	0144  8B D9				     $$clear_byte:   mov bx, cx
+1   116	0146  03 DB									     add bx, bx
+1   117
+1   118	0148  26: C6 07	20							     mov byte ptr es:[bx], 20h
+1   119	014C  43									     inc bx
+1   120	014D  26: C6 07	07								     mov byte ptr es:[bx], 07h
+1   121	0151  E2 F1								     loop $$clear_byte
+1   122	0153  5B 59				     pop bx cx
+1   123
+    124
+    125	0155  55				 push bp
+    126	0156  8B EC				 mov  bp, sp
+    127
+    128	0158  8B 76 04				     mov si, [bp + 4] ;	si = style
+    129	015B  83 FE 03				     cmp si, 3
+    130	015E  74 03				     je	 $$call_user_style
+    131	0160  EB 04 90				     jmp $$not_user_style
+    132
+    133	0163  E8 00B3				     $$call_user_style:	     call user_style
+    134	0166  E8 011E				     $$not_user_style:	     call scanf_msg
+    135	0169  BB 0384r							     lea  bx, message
+    136	016C  E8 0182									     call strlen
+    137	016F  83 C1 04									     add  cx, 4	; cx = width
     138
-    139	0157  8B 76 04				 mov si, [bp + 4] ; si = style
-    140	015A  83 FE 03				 cmp si, 3
-    141	015D  74 03				 je  $$call_user_style
-    142	015F  EB 04 90				 jmp $$not_user_style
-    143
-    144	0162  E8 0139				 $$call_user_style: call user_style
-    145	0165  E8 01A4				 $$not_user_style:  call scanf_msg
-    146	0168  BB 0409r						    lea	bx, message
-    147	016B  E8 0208						    call strlen
-    148	016E  83 C1 04						    add	cx, 4 ;	cx = width
-    149
-    150	0171  8A 7E 0A				 mov bh, [bp + 10] ; bh	= y
-    151	0174  8A 5E 0C				 mov bl, [bp + 12] ; bl	= x
-    152
-    153	0177  E8 00F9				 call calc_crd
-    154
-    155	017A  B8 0000				 mov  ax, 0
-    156	017D  E8 00DD				 call draw_corner ; Draw upper left corner
+    139	0172  8A 7E 0A					     mov bh, [bp + 10] ; bh = y
+    140	0175  8A 5E 0C				 mov bl, [bp + 12] ; bl	= x
+    141
+    142	0178  E8 0073				 call calc_crd ; bx = begin coordinate
+    143							 ;=================================
+    144	017B  8B FB					     mov di, bx	; di = begin coordinate
+    145
+    146	017D  8B 76 04					     mov si, [bp + 4]; si = style
+    147	0180  E8 007C					     call style_pointer
+    148
+    149	0183  8B D9					     mov bx, cx	; bx = width
+    150	0185  B9 0001					     mov cx, 1
+    151
+    152	0188  E8 002F					     call draw_line
+    153						 ;=================================
+    154	018B  8B 76 04					     mov si, [bp + 4]; si = style
+    155	018E  E8 006E					     call style_pointer
+    156	0191  83 C6 03					     add si, 3
     157
-    158	0180  51				 push cx
-    159	0181  83 E9 02				 sub  cx, 2
-    160	0184  03 D9				 add  bx, cx
-    161	0186  03 D9				 add  bx, cx
-    162	0188  B8 0001				 mov  ax, 1
-    163	018B  BF 0003				 mov  di, 3
-    164	018E  E8 00A4				 call draw_line	; Draw heigth line
-    165	0191  59				 pop  cx
+    158	0194  8B 4E 08					     mov cx, [bp + 8]
+    159	0197  83 E9 02					     sub cx, 2
+    160
+    161	019A  E8 001D					     call draw_line
+    162							     ;=================================
+    163	019D  8B 76 04					     mov si, [bp + 4]; si = style
+    164	01A0  E8 005C					     call style_pointer
+    165	01A3  83 C6 06					     add si, 6
     166
-    167	0192  51				 push cx
-    168	0193  83 E9 01				 sub  cx, 1
-    169	0196  03 D9				 add  bx, cx
-    170	0198  03 D9				 add  bx, cx
-    171	019A  B8 0002				 mov  ax, 2
-Turbo Assembler	 Version 4.1	    03/13/23 09:21:09	    Page 4
+    167	01A6  B9 0001					     mov cx, 1
+    168
+    169	01A9  E8 000E					     call draw_line
+    170							     ;=================================
+    171	01AC  8A 7E 0A				     mov bh, [bp + 10] ; bh = y
+Turbo Assembler	 Version 4.1	    03/13/23 19:01:41	    Page 4
 frm.asm
 
 
 
-    172	019D  E8 00BD				 call draw_corner ; Draw upper rigth corner
-    173						 ;===============================
-    174						 ; Draw	rigth line
-    175						 ;===============================
-    176	01A0  8B 4E 08				 mov  cx, [bp +	8] ; cx	= height
-    177	01A3  83 E9 02				 sub  cx, 2
-    178	01A6  81 C3 00A0			 add  bx, 160
-    179	01AA  B8 0005				 mov  ax, 5
-    180	01AD  BF 009F				 mov  di, 159
-    181	01B0  E8 0082				 call draw_line
+    172	01AF  8A 5E 0C				 mov bl, [bp + 12] ; bl	= x
+    173	01B2  8A 46 08				     mov al, [bp + 8]  ; al = heigth
+    174
+    175	01B5  E8 00ED				 call video_prnt_msg
+    176
+    177	01B8  5D				     pop bp
+    178	01B9  C3				 ret
+    179	01BA			     draw_frame	 endp
+    180				     ;============================================
+    181
     182
-    183	01B3  B8 0008				 mov  ax, 8
-    184	01B6  E8 00A4				 call draw_corner ; Draw lower rigth corner
-    185	01B9  59				 pop cx
-    186
-    187	01BA  51				 push cx
-    188	01BB  83 E9 02				 sub  cx, 2
-    189	01BE  83 EB 02				 sub  bx, 2
-    190	01C1  B8 0007				 mov  ax, 7
-    191	01C4  BF 0003				 mov  di, 3
-    192	01C7  E8 006B				 call draw_line	; Draw lower line
-    193
-    194	01CA  B8 0006				 mov  ax, 6
-    195	01CD  E8 008D				 call draw_corner ; Draw lower left corner
+    183				     ;============================================
+    184				     ; Draw line (left,	middle,	rigth symbol)
+    185				     ;============================================
+    186				     ; Entry:	 BX = width
+    187				     ;		 CX = number of	line
+    188				     ;		 SI = number first element
+    189				     ;		 DI = begin coordinate
+    190				     ; Exit:	 DI = new begin	coordinate
+    191				     ; Expects:	 ES = 0b800h
+    192				     ; Destroys: CX, SI
+    193				     ;============================================
+    194	01BA			     draw_line	     proc
+    195	01BA  53				 push bx
     196
-    197	01D0  81 EB 00A0			 sub  bx, 160
-    198	01D4  8B 4E 08				 mov  cx, [bp +	8] ; cx	= height
-    199	01D7  83 E9 02				 sub  cx, 2
-    200	01DA  B8 0003				 mov  ax, 3
-    201	01DD  BF 00A1				 mov  di, 161
-    202	01E0  E8 0052				 call draw_line	; Draw left line
-    203	01E3  59				 pop cx
-    204						 ;===============================
-    205						 ; Draw	inside frame
-    206						 ;===============================
-    207	01E4  81 C3 00A0			 add bx, 160
-    208	01E8  8B 7E 08				 mov di, [bp + 8]  ; di	= height
-    209	01EB  51				 push cx
-    210
-    211	01EC  83 EF 02				 sub di, 2
-    212	01EF  83 E9 02				 sub cx, 2
-    213	01F2  83 C3 02				 add bx, 2
-    214
-    215	01F5  8B 76 04				 mov  si, [bp +	4] ; si	= style
-    216	01F8  B8 0004				 mov  ax, 4
-    217	01FB  E8 0090				 call style_elem
-    218
-    219	01FE  8A 66 06				 mov  ah, [bp +	6] ; ah	= color
-    220
-    221	0201  83 FF 00				 $$draw_inside:	      cmp di, 0
-    222	0204  75 13						      jne $$draw_line_inside
-    223	0206  EB 1F 90						      jmp $$end_draw_inside
-    224
-    225	0209  4F				 $$draw_inside_after: dec di
-    226	020A  81 C6 00A0					      add si, 160
-    227	020E  59						      pop cx
-    228	020F  51						      push cx
-Turbo Assembler	 Version 4.1	    03/13/23 09:21:09	    Page 5
+    197	01BB  83 EB 02					     sub bx, 2	; bx = width - 2
+    198	01BE  B8 0345r				 mov ax, offset	frame_styles
+    199	01C1  03 F0					     add si, ax	; pointer to style first symbol	- corner
+    200
+    201	01C3  53		     $$draw_all: push bx
+    202	01C4  56				 push si
+    203
+    204	01C5  AC					     lodsb	     ;<-- draw left corner
+    205	01C6  AA					     stosb	     ;
+    206											     ;
+    207	01C7  8A 46 06				 mov al, [bp + 6];
+    208	01CA  AA					     stosb	     ;<--;
+    209
+    210	01CB  56					     $$draw_line:    push si			     ;<-- draw line
+    211	01CC  AC							     lodsb			     ;
+    212	01CD  AA							     stosb		     ;
+    213	01CE  5E								     pop  si			     ;
+    214																    +
+    215				     ;
+    216	01CF  8A 46 06						     mov al, [bp + 6]	 ;
+    217	01D2  AA							     stosb			     ;
+    218																    +
+    219				     ;
+    220	01D3  4B									 dec bx				     ;
+    221	01D4  83 FB 00									     cmp bx, 0			     ;
+    222	01D7  75 F2									     jne $$draw_line ;<--;
+    223
+    224	01D9  46				 inc si		 ;<-- draw rigth corner
+    225	01DA  AC					     lodsb	     ;
+    226	01DB  AA					     stosb	     ;
+    227											     ;
+    228	01DC  8A 46 06				 mov al, [bp + 6];
+Turbo Assembler	 Version 4.1	    03/13/23 19:01:41	    Page 5
 frm.asm
 
 
 
-    229	0210  83 E9 02						      sub cx, 2
-    230	0213  2B F1						      sub si, cx
-    231	0215  2B F1						      sub si, cx
-    232
-    233	0217  EB E8						      jmp $$draw_inside
-    234
-    235	0219					 $$draw_line_inside:  REC_VIDEO
-1   236	0219  90			       nop
-1   237
-1   238	021A  26: 88 1C			       mov byte	ptr es:[si], bl
-1   239	021D  46			       inc si
-1   240	021E  26: 88 24			       mov byte	ptr es:[si], ah
-1   241
-1   242	0221  90			       nop
-    243	0222  46						      inc si
+    229	01DF  AA					     stosb	     ;<--;
+    230
+    231	01E0  5E				 pop si
+    232	01E1  5B					     pop bx
+    233
+    234	01E2  81 C7 009C				     add di, 156  ;<--;
+    235	01E6  2B FB					     sub di, bx	      ;
+    236	01E8  2B FB					     sub di, bx	      ;<-- new line on video memory
+    237
+    238	01EA  E2 D7		     loop $$draw_all
+    239
+    240	01EC  5B				 pop bx
+    241	01ED  C3					     ret
+    242	01EE			     draw_line	 endp
+    243				     ;============================================
     244
-    245	0223  E2 F4						      loop $$draw_line_inside
-    246	0225  EB E2						      jmp  $$draw_inside_after
-    247
-    248	0227					 $$end_draw_inside:
-    249	0227  59				 pop cx
-    250						 ;===============================
-    251	0228  8A 7E 0A				 mov bh, [bp + 10] ; bh	= y
-    252	022B  8A 5E 0C				 mov bl, [bp + 12] ; bl	= x
-    253	022E  8A 46 08				 mov al, [bp + 8]  ; al	= heigth
-    254
-    255	0231  E8 00F6				 call video_prnt_msg
+    245
+    246				     ;============================================
+    247				     ; Calculate screen	coordinates
+    248				     ;============================================
+    249				     ; Entry:	  BH = Y, BL = X
+    250				     ; Exit:	  BX = screen coordinates
+    251				     ; Expects:	  None
+    252				     ; Destroys:  None
+    253				     ;============================================
+    254	01EE			     calc_crd	     proc
+    255	01EE  50				     push ax
     256
-    257	0234  C3				 ret
-    258	0235			     draw_frame	 endp
-    259				     ;============================================
-    260
-    261
-    262				     ;============================================
-    263				     ; Draw line
-    264				     ;============================================
-    265				     ; Entry:
-    266				     ; Exit:
-    267				     ; Expects:
-    268				     ; Destroys:
-    269				     ;============================================
-    270	0235			     draw_line proc
-    271	0235  8B 76 04			       mov si, [bp + 4]	; si = style
-    272	0238  E8 0053			       call style_elem
-    273
-    274	023B  8B D0			       mov  dx,	ax
-    275	023D  8A 66 06			       mov  ah,	[bp + 6] ; ah =	color
-    276
-    277	0240				       $$draw_line: REC_VIDEO
-1   278	0240  90			       nop
-1   279
-1   280	0241  26: 88 1C			       mov byte	ptr es:[si], bl
-1   281	0244  46			       inc si
-1   282	0245  26: 88 24			       mov byte	ptr es:[si], ah
-1   283
-1   284	0248  90			       nop
-    285	0249  83 FA 05					    cmp	dx, 5
-Turbo Assembler	 Version 4.1	    03/13/23 09:21:09	    Page 6
+    257	01EF  8A C7					     mov al, bh
+    258	01F1  B4 00					     mov ah, 00h
+    259	01F3  B7 50					     mov bh, 80d
+    260	01F5  F6 E7					     mul bh		     ; a = 80*a	(symbol	in string)
+    261	01F7  B7 00					     mov bh, 00h	     ; bh = null
+    262	01F9  03 D8					     add bx, ax
+    263	01FB  D1 E3					     shl bx, 1		     ; bx = 2*bx (x = 2*x)
+    264
+    265	01FD  58				     pop ax
+    266	01FE  C3				     ret
+    267	01FF			     calc_crd	     endp
+    268				     ;============================================
+    269
+    270				     include style.asm
+1   271				     ;============================================
+1   272				     ; Style pointer
+1   273				     ;============================================
+1   274				     ; Entry:	  SI = style frame
+1   275				     ; Exit:	  SI = style pointer
+1   276				     ; Expects:	  None
+1   277				     ; Destroys:  None
+1   278				     ;============================================
+1   279	01FF			     style_pointer   proc
+1   280	01FF  50					     push ax
+1   281
+1   282	0200  B8 0009					     mov  ax, 9	 ;==================;
+1   283	0203  F7 E6					     mul  si	 ;   si	= 9*style   ;
+1   284	0205  8B F0				     mov  si, ax ;==================;
+1   285
+Turbo Assembler	 Version 4.1	    03/13/23 19:01:41	    Page 6
 frm.asm
 
 
 
-    286	024C  74 03					    je	$$add_si
-    287	024E  EB 06 90					    jmp	$$sub_si
-    288
-    289	0251  03 F7					    $$add_si:	      add  si, di
-    290	0253  EB 03 90							      jmp  $$end_add_or_sub
-    291	0256  2B F7					    $$sub_si:	      sub  si, di
-    292	0258  E2 E6					    $$end_add_or_sub: loop $$draw_line
-    293
-    294	025A  8B DE			       mov bx, si
-    295	025C  C3			       ret
-    296	025D			     draw_line endp
-    297				     ;============================================
-    298
-    299
-    300				     ;============================================
-    301				     ; Draw corner
-    302				     ;============================================
-    303				     ; Entry:	  None
-    304				     ; Exit:	  None
-    305				     ; Expects:	  None
-    306				     ; Destroys:  None
-    307				     ;============================================
-    308	025D			     draw_corner proc
-    309	025D  8B 76 04				 mov  si, [bp +	4] ; si	= style
-    310	0260  E8 002B				 call style_elem
-    311
-    312	0263  8A 66 06				 mov ah, [bp + 6] ; ah = color
-    313
-    314						 REC_VIDEO
-1   315	0266  90			       nop
+1   286	0207  58					     pop  ax
+1   287	0208  C3				     ret
+1   288	0209			     style_pointer   endp
+1   289				     ;============================================
+1   290
+1   291
+1   292				     ;============================================
+1   293				     ; Style element
+1   294				     ;============================================
+1   295				     ; Entry:	  AX = element number whose style is needed
+1   296				     ;		  SI = style frame
+1   297				     ; Exit:	  SI = old BX
+1   298				     ;		  BX = style element
+1   299				     ; Expects:	  There	is the mass "frame_styles"
+1   300				     ; Destroys:  None
+1   301				     ;============================================
+1   302	0209			     style_elem	     proc
+1   303	0209  53					     push bx
+1   304
+1   305	020A  E8 FFF2					     call style_pointer
+1   306
+1   307	020D  8B DE					     mov bx, si
+1   308	020F  03 D8					     add bx, ax
+1   309	0211  8D 9F 0345r				     lea bx, frame_styles + bx ; bx = frame_styles + bx	;
+1   310	0215  8B 1F					     mov bx, [bx]	       ; bx = value in bx	;
+1   311
+1   312	0217  5E					     pop si ; si = old bx
+1   313	0218  C3					     ret
+1   314	0219			     style_elem	     endp
+1   315				     ;============================================
 1   316
-1   317	0267  26: 88 1C			       mov byte	ptr es:[si], bl
-1   318	026A  46			       inc si
-1   319	026B  26: 88 24			       mov byte	ptr es:[si], ah
-1   320
-1   321	026E  90			       nop
-    322	026F  4E				 dec si
-    323
-    324	0270  8B DE				 mov bx, si
-    325	0272  C3				 ret
-    326	0273			     draw_corner endp
-    327				     ;============================================
-    328
-    329				     ;============================================
-    330				     ; Calculate screen	coordinates
-    331				     ;============================================
-    332				     ; Entry:	  BH = Y, BL = X
-    333				     ; Exit:	  BX = screen coordinates
-    334				     ; Expects:	  None
-    335				     ; Destroys:  None
-    336				     ;============================================
-    337	0273			     calc_crd proc
-    338	0273  50			      push ax
-    339
-    340	0274  8A C7			      mov al, bh
-    341	0276  B4 00			      mov ah, 00h
-    342	0278  B7 50			      mov bh, 80d
-Turbo Assembler	 Version 4.1	    03/13/23 09:21:09	    Page 7
+1   317
+1   318				     ;============================================
+1   319				     ; User frame style
+1   320				     ;============================================
+1   321				     ; Entry:	  SI = style frame
+1   322				     ; Exit:
+1   323				     ; Expects:	  There	is the mass "frame_styles"
+1   324				     ;		  There	is the mass "consol_prnt"
+1   325				     ;		  There	is the mass "user_style_var"
+1   326				     ; Destroys:  AX, BX, DX, SI
+1   327				     ;============================================
+1   328	0219			     user_style	     proc
+1   329
+1   330	0219  B4 09				     mov ah, 09h
+1   331	021B  BA 03E8r					     mov dx, offset consol_prnt_style
+1   332	021E  CD 21					     int 21h
+1   333
+1   334	0220  E8 FFDC				     call style_pointer	; si = style_pointer
+1   335
+1   336	0223  B9 0009					     mov cx, 9
+1   337	0226  BB 03FCr					     $$element_frame_prnt:   lea  bx, user_style_var
+1   338	0229  E8 000E								     call scanf
+1   339	022C  BB 03FCr											     lea  bx, user_style_var
+1   340	022F  E8 001A											     call string_to_hex
+1   341	0232  88 84 0345r										     mov  frame_styles + si,+
+    342				     al
+Turbo Assembler	 Version 4.1	    03/13/23 19:01:41	    Page 7
 frm.asm
 
 
 
-    343	027A  F6 E7			      mul bh		      ;	a = 80*a (symbol in string)
-    344	027C  B7 00			      mov bh, 00h	      ;	bh = null
-    345	027E  03 D8			      add bx, ax
-    346	0280  D1 E3			      shl bx, 1		      ;	bx = 2*bx (x = 2*x)
-    347
-    348	0282  58			      pop ax
-    349	0283  C3			      ret
-    350	0284			     calc_crd endp
-    351				     ;============================================
-    352
-    353				     include style.asm
-1   354				     ;============================================
-1   355				     ; Style pointer
-1   356				     ;============================================
-1   357				     ; Entry:	  SI = style frame
-1   358				     ; Exit:	  SI = style pointer
-1   359				     ; Expects:	  None
-1   360				     ; Destroys:  None
-1   361				     ;============================================
-1   362	0284			     style_pointer proc
-1   363	0284  50				   push	ax
-1   364
-1   365	0285  B8 0009				   mov	ax, 9  ;==================;
-1   366	0288  F7 E6				   mul	si     ;   si =	9*style	  ;
-1   367	028A  8B F0				   mov	si, ax ;==================;
-1   368
-1   369	028C  58				   pop	ax
-1   370	028D  C3				   ret
-1   371	028E			     style_pointer endp
-1   372				     ;============================================
-1   373
-1   374
-1   375				     ;============================================
-1   376				     ; Style element
+1   343	0236  46											     inc  si
+1   344	0237  E2 ED											     loop		    +
+    345				     $$element_frame_prnt
+1   346
+1   347	0239  C3				     ret
+1   348	023A			     user_style	     endp
+1   349				     ;============================================
+1   350
+1   351				     ;============================================
+1   352				     ; Scanf, while did	not enter a space or enter
+1   353				     ;============================================
+1   354				     ; Entry:	  BX = pointer to string
+1   355				     ; Exit:	  None
+1   356				     ; Expects:	  None
+1   357				     ; Destroys:  AX
+1   358				     ;============================================
+1   359	023A			     scanf   proc
+1   360	023A  B4 01			     $$scanf:	     mov ah, 01h
+1   361	023C  CD 21					     int 21h
+1   362
+1   363	023E  3C 0D						     cmp al, 0dh
+1   364	0240  74 09						     je	 $$end_scanf
+1   365	0242  3C 20						     cmp al, 20h
+1   366	0244  74 05						     je	 $$end_scanf
+1   367
+1   368	0246  88 07						     mov [bx], al
+1   369	0248  43						     inc bx
+1   370	0249  EB EF						     jmp $$scanf
+1   371
+1   372	024B  C3			     $$end_scanf: ret
+1   373	024C			     scanf   endp
+1   374				     ;============================================
+1   375
+1   376
 1   377				     ;============================================
-1   378				     ; Entry:	  AX = element number whose style is needed
-1   379				     ;		  SI = style frame
-1   380				     ; Exit:	  SI = old BX
-1   381				     ;		  BX = style element
-1   382				     ; Expects:	  There	is the mass "frame_styles"
+1   378				     ; Сonverts the hex number	written	in the string to a number
+1   379				     ;============================================
+1   380				     ; Entry:	  BX = pointer to string
+1   381				     ; Exit:	  AL = hex number
+1   382				     ; Expects:	  None
 1   383				     ; Destroys:  None
 1   384				     ;============================================
-1   385	028E			     style_elem	proc
-1   386	028E  53				push bx
+1   385	024C			     string_to_hex   proc
+1   386	024C  51 56 53				     push cx si	bx
 1   387
-1   388	028F  E8 FFF2				call style_pointer
-1   389
-1   390	0292  8B DE				mov bx,	si
-1   391	0294  03 D8				add bx,	ax
-1   392
-1   393	0296  8D 9F 03CAr			lea bx,	frame_styles + bx ; bx = frame_styles +	bx ;
-1   394	029A  8B 1F				mov bx,	[bx]		  ; bx = value in bx	   ;
-1   395
-1   396	029C  5E				pop si ; si = old bx
-1   397
-1   398	029D  C3				ret
-1   399	029E			     style_elem	endp
-Turbo Assembler	 Version 4.1	    03/13/23 09:21:09	    Page 8
+1   388	024F  B9 0000					     mov cx, 0
+1   389	0252  B8 0000					     mov ax, 0
+1   390	0255  53				     $$loop_string_to_hex:   push bx
+1   391	0256  8B 1F								     mov bx, [bx]
+1   392	0258  32 FF											     xor bh, bh
+1   393
+1   394	025A  80 FB 68											     cmp bl, 68h
+1   395	025D  74 23											     je	$$end_loop
+1   396
+1   397	025F  80 FB 39								     cmp bl, 39h
+1   398	0262  7E 03											     jle $$if_bx_jle_39h
+1   399	0264  EB 07 90											     jmp $$else_bx_jle_39h
+Turbo Assembler	 Version 4.1	    03/13/23 19:01:41	    Page 8
 frm.asm
 
 
 
-1   400				     ;============================================
-1   401
-1   402
-1   403				     ;============================================
-1   404				     ; User frame style
-1   405				     ;============================================
-1   406				     ; Entry:	  SI = style frame
-1   407				     ; Exit:
-1   408				     ; Expects:	  There	is the mass "frame_styles"
-1   409				     ;		  There	is the mass "consol_prnt"
-1   410				     ;		  There	is the mass "user_style_var"
-1   411				     ; Destroys:  AX, BX, DX, SI
-1   412				     ;============================================
-1   413	029E			     user_style	proc
-1   414
-1   415	029E  B4 09				mov ah,	09h
-1   416	02A0  BA 046Dr				mov dx,	offset consol_prnt_style
-1   417	02A3  CD 21				int 21h
+1   400
+1   401	0267  80 EB 30					     $$if_bx_jle_39h:		     sub bl, 30h
+1   402	026A  EB 07 90											     jmp $$end_if_bx_jle_39h
+1   403
+1   404	026D  80 EB 37					     $$else_bx_jle_39h:	     sub bl, 37h
+1   405	0270  EB 01 90											     jmp $$end_if_bx_jle_39h
+1   406
+1   407	0273						     $$end_if_bx_jle_39h:
+1   408
+1   409	0273  BE 0010					     mov  si, 16 ; si =	16
+1   410	0276  E8 00AE					     call pow	 ; si =	16^cx
+1   411	0279  F7 E6					     mul  si	 ; ax =	ax*(16^cx)
+1   412	027B  03 C3					     add  ax, bx ; ax =	bx + ax*(16^cx)
+1   413
+1   414	027D  5B					     pop bx
+1   415	027E  43					     inc bx
+1   416	027F  41					     inc cx
+1   417	0280  EB D3					     jmp $$loop_string_to_hex
 1   418
-1   419	02A5  E8 FFDC				call style_pointer ; si	= style_pointer
+1   419	0282  5B					     $$end_loop: pop bx
 1   420
-1   421	02A8  B9 0009				mov cx,	9
-1   422	02AB  BB 0481r				$$element_frame_prnt: lea  bx, user_style_var
-1   423	02AE  E8 000E						      call scanf
-1   424	02B1  BB 0481r						      lea  bx, user_style_var
-1   425	02B4  E8 001A						      call string_to_hex
-1   426	02B7  88 84 03CAr					      mov  frame_styles	+ si, al
-1   427	02BB  46						      inc  si
-1   428	02BC  E2 ED						      loop $$element_frame_prnt
-1   429
-1   430	02BE  C3				ret
-1   431	02BF			     user_style	endp
-1   432				     ;============================================
-1   433
+1   421	0283  5B 5E 59					     pop bx si cx
+1   422	0286  C3				     ret
+1   423	0287			     string_to_hex   endp
+1   424				     ;============================================
+1   425
+    426				     include msg.asm
+1   427				     ;============================================
+1   428				     ; Scanf message for frame
+1   429				     ;============================================
+1   430				     ; Entry:	  None
+1   431				     ; Exit:	  None
+1   432				     ; Expects:	  There	is the mass "message"
+1   433				     ; Destroys:  None
 1   434				     ;============================================
-1   435				     ; Scanf, while did	not enter a space or enter
-1   436				     ;============================================
-1   437				     ; Entry:	  BX = pointer to string
-1   438				     ; Exit:	  None
-1   439				     ; Expects:	  None
-1   440				     ; Destroys:  AX
-1   441				     ;============================================
-1   442	02BF			     scanf proc
-1   443	02BF  B4 01			   $$scanf: mov	ah, 01h
-1   444	02C1  CD 21				    int	21h
+1   435	0287			     scanf_msg proc
+1   436	0287  50 53 52			       push ax bx dx
+1   437
+1   438	028A  B4 09			       mov ah, 09h
+1   439	028C  BA 0369r			       mov dx, offset consol_prnt_msg
+1   440	028F  CD 21			       int 21h
+1   441
+1   442	0291  BB 0384r			       lea bx, message
+1   443	0294  B4 01			       $$scanf_msg: mov	ah, 01h
+1   444	0296  CD 21					    int	21h
 1   445
-1   446	02C3  3C 0D				    cmp	al, 0dh
-1   447	02C5  74 09				    je	$$end_scanf
+1   446	0298  3C 0D					    cmp	al, 0dh
+1   447	029A  74 05					    je	$$end_scanf_msg
 1   448
-1   449	02C7  3C 20				    cmp	al, 20h
-1   450	02C9  74 05				    je	$$end_scanf
-1   451
-1   452	02CB  88 07				    mov	[bx], al
-1   453	02CD  43				    inc	bx
-1   454	02CE  EB EF				    jmp	$$scanf
-1   455
-1   456	02D0				    $$end_scanf:
-Turbo Assembler	 Version 4.1	    03/13/23 09:21:09	    Page 9
+1   449	029C  88 07					    mov	[bx], al
+1   450	029E  43					    inc	bx
+1   451	029F  EB F3					    jmp	$$scanf_msg
+1   452
+1   453	02A1				       $$end_scanf_msg:
+1   454
+1   455	02A1  5A 5B 58			       pop dx bx ax
+1   456
+Turbo Assembler	 Version 4.1	    03/13/23 19:01:41	    Page 9
 frm.asm
 
 
 
-1   457
-1   458	02D0  C3			    ret
-1   459	02D1			     scanf endp
-1   460				     ;============================================
+1   457	02A4  C3			       ret
+1   458	02A5			     scanf_msg endp
+1   459				     ;============================================
+1   460
 1   461
-1   462
-1   463				     ;============================================
-1   464				     ; Сonverts the hex number	written	in the string to a number
-1   465				     ;============================================
-1   466				     ; Entry:	  BX = pointer to string
-1   467				     ; Exit:	  AL = hex number
-1   468				     ; Expects:	  None
-1   469				     ; Destroys:  None
+1   462				     ;============================================
+1   463				     ; Print message to	video memory
+1   464				     ;============================================
+1   465				     ; Entry:	  BH = Y, BL = X
+1   466				     ;		  AL = height
+1   467				     ; Exit:	  None
+1   468				     ; Expects:	  There	is the mass "message"
+1   469				     ; Destroys:  BX
 1   470				     ;============================================
-1   471	02D1			     string_to_hex proc
-1   472	02D1  51				   push	cx
-1   473	02D2  56				   push	si
-1   474	02D3  53				   push	bx
-1   475
-1   476	02D4  B9 0000				   mov cx, 0
-1   477	02D7  B8 0000				   mov ax, 0
-1   478	02DA  53				   $$loop_string_to_hex: push bx
-1   479
-1   480	02DB  8B 1F							 mov bx, [bx]
+1   471	02A5			     video_prnt_msg  proc
+1   472	02A5  53				     push bx
+1   473	02A6  BB 0384r				     lea  bx, message
+1   474	02A9  E8 0045					     call strlen
+1   475	02AC  5B					     pop  bx
+1   476
+1   477	02AD  E8 001B					     call call_cord_msg
+1   478
+1   479	02B0  8B F3					     mov si, bx	; si = begin massege coordinate
+1   480	02B2  BB 0384r					     lea bx, message
 1   481
-1   482	02DD  32 FF							 xor bh, bh
+1   482	02B5  53					     $$video_prnt_msg_loop:  push bx
 1   483
-1   484	02DF  80 FB 68							 cmp bl, 68h
-1   485	02E2  74 23							 je $$end_loop
-1   486
-1   487	02E4  80 FB 39							 cmp bl, 39h
-1   488	02E7  7E 03							 jle $$if_bx_jle_39h
-1   489	02E9  EB 07 90							 jmp $$else_bx_jle_39h
-1   490
-1   491	02EC  80 EB 30				   $$if_bx_jle_39h:	 sub bl, 30h
-1   492	02EF  EB 07 90							 jmp $$end_if_bx_jle_39h
-1   493
-1   494	02F2  80 EB 37				   $$else_bx_jle_39h:	 sub bl, 37h
-1   495	02F5  EB 01 90							 jmp $$end_if_bx_jle_39h
+1   484	02B6  8B 1F								     mov bx, [bx]
+1   485	02B8  80 FB 24											     cmp bl, 24h
+1   486	02BB  74 0C											     je			    +
+    487				     $$end_video_prnt_msg_loop
+1   488
+1   489	02BD  26: 88 1C											     mov byte ptr es:[si], bl
+1   490	02C0  83 C6 02											     add si, 2
+1   491
+1   492	02C3  5B											     pop bx
+1   493	02C4  83 C3 01											     add bx, 1
+1   494	02C7  EB EC											     jmp		    +
+    495				     $$video_prnt_msg_loop
 1   496
-1   497	02F8					   $$end_if_bx_jle_39h:
-1   498
-1   499	02F8  BE 0010				   mov	si, 16 ; si = 16
-1   500	02FB  E8 00AE				   call	pow    ; si = 16^cx
-1   501	02FE  F7 E6				   mul	si     ; ax = ax*(16^cx)
-1   502	0300  03 C3				   add	ax, bx ; ax = bx + ax*(16^cx)
-1   503
-1   504	0302  5B				   pop bx
-1   505	0303  43				   inc bx
-1   506	0304  41				   inc cx
-1   507	0305  EB D3				   jmp $$loop_string_to_hex
-1   508
-1   509	0307  5B				   $$end_loop: pop bx
-1   510
-1   511	0308  5B				   pop bx
-1   512	0309  5E				   pop si
-1   513	030A  59				   pop cx
-Turbo Assembler	 Version 4.1	    03/13/23 09:21:09	    Page 10
+1   497	02C9  5B					     $$end_video_prnt_msg_loop:	pop bx
+1   498	02CA  C3				     ret
+1   499	02CB			     video_prnt_msg  endp
+1   500				     ;============================================
+1   501
+1   502
+1   503				     ;============================================
+1   504				     ; Calculate begin massege recording to video
+1   505				     ;============================================
+1   506				     ; Entry:	  BH = Y, BL = X
+1   507				     ;		  AL = height
+1   508				     ; Exit:	  BX = coordinate begin	msg
+1   509				     ; Expects:	  None
+1   510				     ; Destroys:  AX, CX, DX, SI
+1   511				     ;============================================
+1   512	02CB			     call_cord_msg   proc
+1   513
+Turbo Assembler	 Version 4.1	    03/13/23 19:01:41	    Page 10
 frm.asm
 
 
 
-1   514
-1   515	030B  C3				   ret
-1   516	030C			     string_to_hex endp
-1   517				     ;============================================
-1   518
-    519				     include msg.asm
-1   520				     ;============================================
-1   521				     ; Scanf message for frame
-1   522				     ;============================================
-1   523				     ; Entry:	  None
-1   524				     ; Exit:	  None
-1   525				     ; Expects:	  There	is the mass "message"
-1   526				     ; Destroys:  None
-1   527				     ;============================================
-1   528	030C			     scanf_msg proc
-1   529	030C  50			       push ax
-1   530	030D  53			       push bx
-1   531	030E  52			       push dx
+1   514	02CB  E8 FF20				     call calc_crd
+1   515
+1   516	02CE  2C 02					     sub al, 2
+1   517	02D0  32 E4					     xor ah, ah
+1   518	02D2  B9 0050					     mov cx, 80
+1   519	02D5  F7 E1					     mul cx
+1   520	02D7  03 D8					     add bx, ax
+1   521
+1   522	02D9  83 C3 03					     add bx, 3
+1   523
+1   524	02DC  8B F3					     mov si, bx	; si = coordinate begin	msg
+1   525	02DE  8B C3					     mov ax, bx	; ax = coordinate begin	msg
+1   526	02E0  BB 0002					     mov bx, 2
+1   527	02E3  F7 F3					     div bx	; ax = ax/2
+1   528	02E5  83 FA 01					     cmp dx, 1	; compare the remainder	of the division	with 1
+1   529
+1   530	02E8  74 03					     je	 $$plus_coord_msg
+1   531	02EA  EB 02 90					     jmp $$not_plus_coord_msg
 1   532
-1   533	030F  B4 09			       mov ah, 09h
-1   534	0311  BA 03EEr			       mov dx, offset consol_prnt_msg
-1   535	0314  CD 21			       int 21h
-1   536
-1   537	0316  BB 0409r			       lea bx, message
-1   538	0319  B4 01			       $$scanf_msg: mov	ah, 01h
-1   539	031B  CD 21					    int	21h
-1   540
-1   541	031D  3C 0D					    cmp	al, 0dh
-1   542	031F  74 05					    je	$$end_scanf_msg
-1   543
-1   544	0321  88 07					    mov	[bx], al
-1   545	0323  43					    inc	bx
-1   546	0324  EB F3					    jmp	$$scanf_msg
-1   547
-1   548	0326				       $$end_scanf_msg:
-1   549
-1   550	0326  5A			       pop dx
-1   551	0327  5B			       pop bx
-1   552	0328  58			       pop ax
-1   553
-1   554	0329  C3			       ret
-1   555	032A			     scanf_msg endp
-1   556				     ;============================================
+1   533	02ED  46					     $$plus_coord_msg:	     inc si	; si = si + 1
+1   534	02EE  8B DE					     $$not_plus_coord_msg:   mov bx, si	; bx = new coordinate begin msg
+1   535
+1   536	02F0  C3				     ret
+1   537	02F1			     call_cord_msg   endp
+1   538				     ;============================================
+    539				     include str.asm
+1   540				     ;============================================
+1   541				     ; String length
+1   542				     ;============================================
+1   543				     ; Entry:	  BX = pointer to begin	string
+1   544				     ; Exit:	  CX = string length
+1   545				     ; Expects:	  None
+1   546				     ; Destroys:  BX
+1   547				     ;============================================
+1   548	02F1			     strlen proc
+1   549	02F1  B9 0000			    mov	cx, 0
+1   550
+1   551	02F4  53			    $$strlen_loop:	 push bx
+1   552
+1   553	02F5  8B 1F						 mov bx, [bx]
+1   554
+1   555	02F7  80 FB 24						   cmp bl, 24h
+1   556	02FA  74 05						   je  $$end_strlen_loop
 1   557
-1   558
-1   559				     ;============================================
-1   560				     ; Print message to	video memory
-1   561				     ;============================================
-1   562				     ; Entry:	  BH = Y, BL = X
-1   563				     ;		  AL = height
-1   564				     ; Exit:	  None
-1   565				     ; Expects:	  There	is the mass "message"
-1   566				     ; Destroys:  BX
-1   567				     ;============================================
-1   568	032A			     video_prnt_msg proc
-1   569	032A  53				    push bx
-1   570	032B  BB 0409r				    lea	 bx, message
-Turbo Assembler	 Version 4.1	    03/13/23 09:21:09	    Page 11
+1   558	02FC  41						 inc cx
+1   559	02FD  5B						 pop bx
+1   560	02FE  43						   inc bx
+1   561
+1   562	02FF  EB F3						   jmp $$strlen_loop
+1   563	0301  5B			    $$end_strlen_loop:	 pop bx
+1   564	0302  C3			    ret
+1   565	0303			     strlen endp
+1   566				     ;============================================
+1   567
+1   568
+1   569				     ;===========================================
+1   570				     ; String compare
+Turbo Assembler	 Version 4.1	    03/13/23 19:01:41	    Page 11
 frm.asm
 
 
 
-1   571	032E  E8 0045				    call strlen
-1   572	0331  5B				    pop	 bx
-1   573
-1   574	0332  E8 001B				    call call_cord_msg
-1   575
-1   576	0335  8B F3				    mov	si, bx ; si = begin massege coordinate
-1   577	0337  BB 0409r				    lea	bx, message
-1   578
-1   579	033A  53				    $$video_prnt_msg_loop: push	bx
+1   571				     ;===========================================
+1   572				     ; Entry:	  BX = pointer to begin	1th string
+1   573				     ;		  SI = pointer to begin	2th string
+1   574				     ; Exit:	  CL = rezult of compare
+1   575				     ;		  (1th string == 2th string, if	cx == 0)
+1   576				     ; Expects:	  None
+1   577				     ; Destroys:  SI, BX
+1   578				     ;===========================================
+1   579	0303			     strcmp proc
 1   580
-1   581	033B  8B 1F							   mov bx, [bx]
-1   582	033D  80 FB 24							   cmp bl, 24h
-1   583	0340  74 0C							   je $$end_video_prnt_msg_loop
-1   584
-1   585	0342  26: 88 1C							   mov byte ptr	es:[si], bl
-1   586	0345  83 C6 02							   add si, 2
-1   587
-1   588	0348  5B							   pop bx
-1   589	0349  83 C3 01							   add bx, 1
-1   590	034C  EB EC							   jmp $$video_prnt_msg_loop
+1   581	0303  4B			    dec	 bx
+1   582	0304  4E			    dec	 si
+1   583	0305  53 56			    push bx si
+1   584	0307  5E 5B			    $$strcmp_loop:	 pop  si bx
+1   585	0309  43						 inc  bx
+1   586	030A  46						   inc	si
+1   587	030B  53 56						 push bx si
+1   588
+1   589	030D  8B 1F						 mov bx, [bx]
+1   590	030F  8B 0C						   mov cx, [si]
 1   591
-1   592	034E  5B				    $$end_video_prnt_msg_loop: pop bx
-1   593	034F  C3				    ret
-1   594	0350			     video_prnt_msg endp
-1   595				     ;============================================
-1   596
+1   592	0311  80 F9 24						   cmp cl, 24h
+1   593	0314  74 0C						   je $$end_strcmp_loop
+1   594
+1   595	0316  80 FB 24						   cmp bl, 24h
+1   596	0319  74 07						   je $$end_strcmp_loop
 1   597
-1   598				     ;============================================
-1   599				     ; Calculate begin massege recording to video
-1   600				     ;============================================
-1   601				     ; Entry:	  BH = Y, BL = X
-1   602				     ;		  AL = height
-1   603				     ; Exit:	  BX = coordinate begin	msg
-1   604				     ; Expects:	  None
-1   605				     ; Destroys:  AX, CX, DX, SI
-1   606				     ;============================================
-1   607	0350			     call_cord_msg proc
-1   608
-1   609	0350  E8 FF20				   call	calc_crd
-1   610
-1   611	0353  2C 02				   sub al, 2
-1   612	0355  32 E4				   xor ah, ah
-1   613	0357  B9 0050				   mov cx, 80
-1   614	035A  F7 E1				   mul cx
-1   615	035C  03 D8				   add bx, ax
-1   616
-1   617	035E  83 C3 03				   add bx, 3
-1   618
-1   619	0361  8B F3				   mov si, bx ;	si = coordinate	begin msg
-1   620	0363  8B C3				   mov ax, bx ;	ax = coordinate	begin msg
-1   621	0365  BB 0002				   mov bx, 2
-1   622	0368  F7 F3				   div bx     ;	ax = ax/2
-1   623	036A  83 FA 01				   cmp dx, 1  ;	compare	the remainder of the division with 1
-1   624
-1   625	036D  74 03				   je  $$plus_coord_msg
-1   626	036F  EB 02 90				   jmp $$not_plus_coord_msg
+1   598	031B  3A D9						   cmp bl, cl
+1   599	031D  74 E8						   je  $$strcmp_loop
+1   600	031F  EB 01 90						   jmp $$end_strcmp_loop
+1   601
+1   602	0322  2A CB			    $$end_strcmp_loop:	 sub cl, bl
+1   603	0324  5E 5B			    pop	si bx
+1   604	0326  C3			    ret
+1   605	0327			     strcmp endp
+1   606				     ;===========================================
+    607				     include math.asm
+1   608				     ;============================================
+1   609				     ; Pow
+1   610				     ;============================================
+1   611				     ; Entry:	  SI = foundation
+1   612				     ;		  CX = index
+1   613				     ; Exit:	  SI = rezult
+1   614				     ; Expects:	  None
+1   615				     ; Destroys:  None
+1   616				     ;============================================
+1   617	0327			     pow proc
+1   618	0327  51 50			 push cx ax
+1   619
+1   620	0329  83 F9 00			 cmp cx, 0
+1   621	032C  74 11			 je  $$pow_loop_exception
+1   622
+1   623	032E  83 F9 01			 cmp cx, 1
+1   624	0331  74 0F			 je  $$end_pow_loop
+1   625
+1   626	0333  49			 dec cx
 1   627
-Turbo Assembler	 Version 4.1	    03/13/23 09:21:09	    Page 12
+Turbo Assembler	 Version 4.1	    03/13/23 19:01:41	    Page 12
 frm.asm
 
 
 
-1   628	0372  46				   $$plus_coord_msg:	 inc si	    ; si = si +	1
-1   629	0373  8B DE				   $$not_plus_coord_msg: mov bx, si ; bx = new coordinate begin	msg
-1   630
-1   631	0375  C3				   ret
-1   632	0376			     call_cord_msg endp
-1   633				     ;============================================
-    634				     include str.asm
-1   635				     ;============================================
-1   636				     ; String length
-1   637				     ;============================================
-1   638				     ; Entry:	  BX = pointer to begin	string
-1   639				     ; Exit:	  CX = string length
-1   640				     ; Expects:	  None
-1   641				     ; Destroys:  BX
+1   628	0334  8B C6			 $$pow_loop: mov ax, si
+1   629	0336  F7 E6				     mul si
+1   630	0338  8B F0				     mov si, ax
+1   631
+1   632	033A  E2 F8				     loop $$pow_loop
+1   633	033C  EB 04 90				     jmp  $$end_pow_loop
+1   634
+1   635	033F  BE 0001			 $$pow_loop_exception: mov si, 1
+1   636
+1   637	0342				 $$end_pow_loop:
+1   638
+1   639	0342  58 59			 pop ax	cx
+1   640	0344  C3			 ret
+1   641	0345			     pow endp
 1   642				     ;============================================
-1   643	0376			     strlen proc
-1   644	0376  B9 0000			    mov	cx, 0
-1   645
-1   646	0379  53			    $$strlen_loop: push	bx
-1   647
-1   648	037A  8B 1F					   mov bx, [bx]
-1   649
-1   650	037C  80 FB 24					   cmp bl, 24h
-1   651	037F  74 05					   je  $$end_strlen_loop
-1   652
-1   653	0381  41					   inc cx
-1   654	0382  5B					   pop bx
-1   655	0383  43					   inc bx
-1   656
-1   657	0384  EB F3					   jmp $$strlen_loop
-1   658
-1   659
-1   660	0386  5B			    $$end_strlen_loop: pop bx
-1   661
-1   662	0387  C3			    ret
-1   663	0388			     strlen endp
-1   664				     ;============================================
-1   665
-1   666
-1   667				     ;===========================================
-1   668				     ; String compare
-1   669				     ;===========================================
-1   670				     ; Entry:	  BX = pointer to begin	1th string
-1   671				     ;		  SI = pointer to begin	2th string
-1   672				     ; Exit:	  CL = rezult of compare
-1   673				     ;		  (1th string == 2th string, if	cx == 0)
-1   674				     ; Expects:	  None
-1   675				     ; Destroys:  SI, BX
-1   676				     ;===========================================
-1   677	0388			     strcmp proc
-1   678
-1   679	0388  4B			    dec	 bx
-1   680	0389  4E			    dec	 si
-1   681	038A  53 56			    push bx si
-1   682	038C  5E 5B			    $$strcmp_loop: pop	si bx
-1   683	038E  43					   inc	bx
-1   684	038F  46					   inc	si
-Turbo Assembler	 Version 4.1	    03/13/23 09:21:09	    Page 13
-frm.asm
-
-
-
-1   685	0390  53 56					   push	bx si
-1   686
-1   687	0392  8B 1F					   mov bx, [bx]
-1   688	0394  8B 0C					   mov cx, [si]
-1   689
-1   690	0396  80 F9 24					   cmp cl, 24h
-1   691	0399  74 0C					   je $$end_strcmp_loop
-1   692
-1   693	039B  80 FB 24					   cmp bl, 24h
-1   694	039E  74 07					   je $$end_strcmp_loop
-1   695
-1   696	03A0  3A D9					   cmp bl, cl
-1   697	03A2  74 E8					   je  $$strcmp_loop
-1   698	03A4  EB 01 90					   jmp $$end_strcmp_loop
-1   699
-1   700	03A7  2A CB			    $$end_strcmp_loop: sub cl, bl
-1   701
-1   702	03A9  5E 5B			    pop	si bx
-1   703
-1   704	03AB  C3			    ret
-1   705	03AC			     strcmp endp
-1   706				     ;===========================================
-    707				     include math.asm
-1   708				     ;============================================
-1   709				     ; Pow
-1   710				     ;============================================
-1   711				     ; Entry:	  SI = foundation
-1   712				     ;		  CX = index
-1   713				     ; Exit:	  SI = rezult
-1   714				     ; Expects:	  None
-1   715				     ; Destroys:  None
-1   716				     ;============================================
-1   717	03AC			     pow proc
-1   718	03AC  51			 push cx
-1   719	03AD  50			 push ax
-1   720
-1   721	03AE  83 F9 00			 cmp cx, 0
-1   722	03B1  74 11			 je  $$pow_loop_exception
-1   723
-1   724	03B3  83 F9 01			 cmp cx, 1
-1   725	03B6  74 0F			 je  $$end_pow_loop
-1   726
-1   727	03B8  49			 dec cx
-1   728
-1   729	03B9  8B C6			 $$pow_loop: mov ax, si
-1   730	03BB  F7 E6				     mul si
-1   731	03BD  8B F0				     mov si, ax
-1   732
-1   733	03BF  E2 F8				     loop $$pow_loop
-1   734	03C1  EB 04 90				     jmp  $$end_pow_loop
-1   735
-1   736	03C4  BE 0001			 $$pow_loop_exception: mov si, 1
-1   737
-1   738	03C7				 $$end_pow_loop:
-1   739
-1   740	03C7  58			 pop ax
-1   741	03C8  59			 pop cx
-Turbo Assembler	 Version 4.1	    03/13/23 09:21:09	    Page 14
-frm.asm
-
-
-
-1   742
-1   743	03C9  C3			 ret
-1   744	03CA			     pow endp
-1   745				     ;============================================
-1   746
-    747
-    748	03CA  DA C4 BF		     frame_styles      db 0Dah,	0C4h, 0Bfh ;== style 0 ==;
-    749	03CD  B3 20 B3				       db 0B3h,	020h, 0B3h ;	line	 ;
-    750	03D0  C0 C4 D9				       db 0C0h,	0C4h, 0D9h ;=============;
-    751
-    752	03D3  03 03 03				       db 03h, 03h,  03h   ;== style 1 ==;
-    753	03D6  03 20 03				       db 03h, 020h, 03h   ;	heart	 ;
-    754	03D9  03 03 03				       db 03h, 03h,  03h   ;=============;
-    755
-    756	03DC  C9 CD BB				       db 0C9h,	0CDh, 0BBh ;== style 2 ==;
-    757	03DF  BA 20 BA				       db 0BAh,	020h, 0BAh ; double line ;
-    758	03E2  C8 CD BC				       db 0C8h,	0CDh, 0BCh ;=============;
-    759
-    760	03E5  09*(24)				       db 9 dup	('$')	   ; memory for	user style (style 3)
-    761
-    762	03EE  45 6E 74 65 72 20	74+  consol_prnt_msg   db "Enter text for the frame: $"
-    763	      65 78 74 20 66 6F	72+
-    764	      20 74 68 65 20 66	72+
-    765	      61 6D 65 3A 20 24
-    766	0409  64*(24)		     message	       db 100 dup ('$')	 ; message for frame
-    767
-    768	046D  45 6E 74 65 72 20	66+  consol_prnt_style db "Enter frame style: $"
-    769	      72 61 6D 65 20 73	74+
-    770	      79 6C 65 3A 20 24
-    771	0481  0A*(24)		     user_style_var    db 10 dup ('$')
-    772
-    773				     end Start
-Turbo Assembler	 Version 4.1	    03/13/23 09:21:09	    Page 15
+1   643
+    644
+    645				     ;============================================
+    646
+    647	0345  DA C4 BF		     frame_styles    db	0Dah, 0C4h, 0Bfh ;== style 0 ==;
+    648	0348  B3 20 B3					     db	0B3h, 020h, 0B3h ;    line     ;
+    649	034B  C0 C4 D9					     db	0C0h, 0C4h, 0D9h ;=============;
+    650
+    651	034E  03 03 03					     db	03h, 03h,  03h	 ;== style 1 ==;
+    652	0351  03 20 03					     db	03h, 020h, 03h	 ;    heart    ;
+    653	0354  03 03 03					     db	03h, 03h,  03h	 ;=============;
+    654
+    655	0357  C9 CD BB					     db	0C9h, 0CDh, 0BBh ;== style 2 ==;
+    656	035A  BA 20 BA					     db	0BAh, 020h, 0BAh ; double line ;
+    657	035D  C8 CD BC					     db	0C8h, 0CDh, 0BCh ;=============;
+    658
+    659	0360  09*(24)						     db	9 dup ('$')	 ; memory for user style (style	3)
+    660
+    661	0369  45 6E 74 65 72 20	74+  consol_prnt_msg   db "Enter text for the frame: $"
+    662	      65 78 74 20 66 6F	72+
+    663	      20 74 68 65 20 66	72+
+    664	      61 6D 65 3A 20 24
+    665	0384  64*(24)		     message	       db 100 dup ('$')	 ; message for frame
+    666
+    667	03E8  45 6E 74 65 72 20	66+  consol_prnt_style db "Enter frame style: $"
+    668	      72 61 6D 65 20 73	74+
+    669	      79 6C 65 3A 20 24
+    670	03FC  0A*(24)		     user_style_var    db 10 dup ('$')	 ; variable for	return hex numbers in a	string
+    671
+    672				     ;============================================
+    673
+    674				     end Start
+Turbo Assembler	 Version 4.1	    03/13/23 19:01:41	    Page 13
 Symbol Table
 
 
@@ -849,41 +740,35 @@ Symbol Table
 
 Symbol Name			  Type	 Value
 
-$$ADD_SI			  Near	 DGROUP:0251
-$$CALL_USER_STYLE		  Near	 DGROUP:0162
-$$CLEAR_BYTE			  Near	 DGROUP:0147
-$$DRAW_INSIDE			  Near	 DGROUP:0201
-$$DRAW_INSIDE_AFTER		  Near	 DGROUP:0209
-$$DRAW_LINE			  Near	 DGROUP:0240
-$$DRAW_LINE_INSIDE		  Near	 DGROUP:0219
-$$ELEMENT_FRAME_PRNT		  Near	 DGROUP:02AB
-$$ELSE_BX_JLE_39H		  Near	 DGROUP:02F2
-$$END_ADD_OR_SUB		  Near	 DGROUP:0258
-$$END_DRAW_INSIDE		  Near	 DGROUP:0227
-$$END_IF_BX_JLE_39H		  Near	 DGROUP:02F8
-$$END_LOOP			  Near	 DGROUP:0307
-$$END_POW_LOOP			  Near	 DGROUP:03C7
-$$END_SCANF			  Near	 DGROUP:02D0
-$$END_SCANF_MSG			  Near	 DGROUP:0326
-$$END_STRCMP_LOOP		  Near	 DGROUP:03A7
-$$END_STRLEN_LOOP		  Near	 DGROUP:0386
-$$END_VIDEO_PRNT_MSG_LOOP	  Near	 DGROUP:034E
-$$IF_BX_JLE_39H			  Near	 DGROUP:02EC
-$$LOOP_STRING_TO_HEX		  Near	 DGROUP:02DA
-$$NOT_PLUS_COORD_MSG		  Near	 DGROUP:0373
-$$NOT_USER_STYLE		  Near	 DGROUP:0165
-$$PLUS_COORD_MSG		  Near	 DGROUP:0372
-$$POW_LOOP			  Near	 DGROUP:03B9
-$$POW_LOOP_EXCEPTION		  Near	 DGROUP:03C4
-$$SCANF				  Near	 DGROUP:02BF
-$$SCANF_MSG			  Near	 DGROUP:0319
-$$STRCMP_LOOP			  Near	 DGROUP:038C
-$$STRLEN_LOOP			  Near	 DGROUP:0379
-$$SUB_SI			  Near	 DGROUP:0256
-$$VIDEO_PRNT_MSG_LOOP		  Near	 DGROUP:033A
+$$CALL_USER_STYLE		  Near	 DGROUP:0163
+$$CLEAR_BYTE			  Near	 DGROUP:0144
+$$DRAW_ALL			  Near	 DGROUP:01C3
+$$DRAW_LINE			  Near	 DGROUP:01CB
+$$ELEMENT_FRAME_PRNT		  Near	 DGROUP:0226
+$$ELSE_BX_JLE_39H		  Near	 DGROUP:026D
+$$END_IF_BX_JLE_39H		  Near	 DGROUP:0273
+$$END_LOOP			  Near	 DGROUP:0282
+$$END_POW_LOOP			  Near	 DGROUP:0342
+$$END_SCANF			  Near	 DGROUP:024B
+$$END_SCANF_MSG			  Near	 DGROUP:02A1
+$$END_STRCMP_LOOP		  Near	 DGROUP:0322
+$$END_STRLEN_LOOP		  Near	 DGROUP:0301
+$$END_VIDEO_PRNT_MSG_LOOP	  Near	 DGROUP:02C9
+$$IF_BX_JLE_39H			  Near	 DGROUP:0267
+$$LOOP_STRING_TO_HEX		  Near	 DGROUP:0255
+$$NOT_PLUS_COORD_MSG		  Near	 DGROUP:02EE
+$$NOT_USER_STYLE		  Near	 DGROUP:0166
+$$PLUS_COORD_MSG		  Near	 DGROUP:02ED
+$$POW_LOOP			  Near	 DGROUP:0334
+$$POW_LOOP_EXCEPTION		  Near	 DGROUP:033F
+$$SCANF				  Near	 DGROUP:023A
+$$SCANF_MSG			  Near	 DGROUP:0294
+$$STRCMP_LOOP			  Near	 DGROUP:0307
+$$STRLEN_LOOP			  Near	 DGROUP:02F4
+$$VIDEO_PRNT_MSG_LOOP		  Near	 DGROUP:02B5
 ??DATE				  Text	 "03/13/23"
 ??FILENAME			  Text	 "frm	  "
-??TIME				  Text	 "09:21:08"
+??TIME				  Text	 "19:01:41"
 ??VERSION			  Number 040A
 @32BIT				  Text	 0
 @CODE				  Text	 DGROUP
@@ -897,32 +782,31 @@ $$VIDEO_PRNT_MSG_LOOP		  Near	 DGROUP:033A
 @MODEL				  Text	 1
 @STACK				  Text	 DGROUP
 @WORDSIZE			  Text	 2
-CALC_CRD			  Near	 DGROUP:0273
-CALL_CORD_MSG			  Near	 DGROUP:0350
-CONSOL_PRNT_MSG			  Byte	 DGROUP:03EE
-CONSOL_PRNT_STYLE		  Byte	 DGROUP:046D
-DRAW_CORNER			  Near	 DGROUP:025D
-DRAW_FRAME			  Near	 DGROUP:013C
-Turbo Assembler	 Version 4.1	    03/13/23 09:21:09	    Page 16
+CALC_CRD			  Near	 DGROUP:01EE
+CALL_CORD_MSG			  Near	 DGROUP:02CB
+CONSOL_PRNT_MSG			  Byte	 DGROUP:0369
+CONSOL_PRNT_STYLE		  Byte	 DGROUP:03E8
+DRAW_FRAME			  Near	 DGROUP:013A
+DRAW_LINE			  Near	 DGROUP:01BA
+FRAME_STYLES			  Byte	 DGROUP:0345
+MESSAGE				  Byte	 DGROUP:0384
+POW				  Near	 DGROUP:0327
+SCANF				  Near	 DGROUP:023A
+SCANF_MSG			  Near	 DGROUP:0287
+START				  Near	 DGROUP:0100
+Turbo Assembler	 Version 4.1	    03/13/23 19:01:41	    Page 14
 Symbol Table
 
 
 
-DRAW_LINE			  Near	 DGROUP:0235
-FRAME_STYLES			  Byte	 DGROUP:03CA
-MESSAGE				  Byte	 DGROUP:0409
-POW				  Near	 DGROUP:03AC
-SCANF				  Near	 DGROUP:02BF
-SCANF_MSG			  Near	 DGROUP:030C
-START				  Near	 DGROUP:0100
-STRCMP				  Near	 DGROUP:0388
-STRING_TO_HEX			  Near	 DGROUP:02D1
-STRLEN				  Near	 DGROUP:0376
-STYLE_ELEM			  Near	 DGROUP:028E
-STYLE_POINTER			  Near	 DGROUP:0284
-USER_STYLE			  Near	 DGROUP:029E
-USER_STYLE_VAR			  Byte	 DGROUP:0481
-VIDEO_PRNT_MSG			  Near	 DGROUP:032A
+STRCMP				  Near	 DGROUP:0303
+STRING_TO_HEX			  Near	 DGROUP:024C
+STRLEN				  Near	 DGROUP:02F1
+STYLE_ELEM			  Near	 DGROUP:0209
+STYLE_POINTER			  Near	 DGROUP:01FF
+USER_STYLE			  Near	 DGROUP:0219
+USER_STYLE_VAR			  Byte	 DGROUP:03FC
+VIDEO_PRNT_MSG			  Near	 DGROUP:02A5
 
 Macro Name
 
@@ -934,5 +818,5 @@ Groups & Segments		  Bit Size Align  Combine Class
 
 DGROUP				  Group
   _DATA				  16  0000 Word	  Public  DATA
-  _TEXT				  16  048B Word	  Public  CODE
+  _TEXT				  16  0406 Word	  Public  CODE
 
