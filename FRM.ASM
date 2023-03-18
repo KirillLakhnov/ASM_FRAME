@@ -21,6 +21,29 @@ EXIT macro
 
 
 ;===========================================
+; String symbol to hex value
+;===========================================
+; Entry:     None
+; Exit:      None
+; Expects:   None
+; Destroys:  AX
+;===========================================
+STR_SYMBOL_TO_HEX 	macro
+					cmp al, 39h
+				    jle $$if_bx_jle_39h
+				    jmp $$else_bx_jle_39h 
+	      
+	      			$$if_bx_jle_39h: 	sub al, 30h
+				    	 				jmp $$end_if_bx_jle_39h
+                                              
+	      			$$else_bx_jle_39h:	sub al, 37h
+				    	 				jmp $$end_if_bx_jle_39h
+                                              
+	      			$$end_if_bx_jle_39h:
+					endm
+;===========================================
+
+;===========================================
 ; Clear video memory
 ;===========================================
 ; Entry:     None
@@ -49,35 +72,87 @@ CLEAR_VIDEO macro
 ;===========================================
 
 
-;===========================================
-; Recording to video memory
-;===========================================
-; Entry:     None
-; Exit:      SI = SI + 1
-; Expects:   ES = 0b800h
-;            BL = symbol
-;            AH = color
-; Destroys:  None
-;===========================================
-REC_VIDEO 	macro
-	  
-	      	mov byte ptr es:[si], bl
-	      	inc si
-	      	mov byte ptr es:[si], ah
-
-	      	endm
-;===========================================
-
-
-Start:	push 30  ; x
-        push 7   ; y
-        push 10  ; height
-        push 4fh ; color
-        push 2   ; style  
+Start:	call read_arg
+        
+        push cx  ; x
+        push dx  ; y
+        push di  ; height
+        push ax  ; color
+        push bx  ; style  
         
         call draw_frame
 
         EXIT
+
+;============================================
+; Read arguments from command line
+;============================================
+; Entry:     
+;            BX = style
+;            CX = X, DX = y
+;            DI = heigth
+; Expects:   
+; Destroys:  
+;============================================
+read_arg 	proc
+			mov si, 82h ; si = adress console buffer
+
+			call read_num
+			mov  cx, bx    ; cx = x
+			call read_num
+			mov  dx, bx    ; dx = y
+			call read_num
+			mov  di, bx    ; di = heigth
+			push dx
+			call scanf_hex   
+			pop dx
+			mov  ax, bx    ; ax = color
+			call read_num  ; bx = style
+
+			ret
+read_arg 	endp
+;============================================
+
+;============================================
+; Read number from command line
+;============================================
+; Entry:     
+; Exit:     BX = number
+; Expects:   
+; Destroys:  
+;============================================
+read_num proc
+         push ax 
+         xor  bx, bx	
+		 $$read_number: xor ax, ax
+						lodsb ; al = consol symbol
+
+						cmp al, 2Ch
+						je $$end_read
+
+						cmp al, 30h
+						jl $$end_read
+
+						cmp al, 39h
+						jg $$end_read
+
+						sub al, 30h ; ASCII --> number
+
+						push ax
+
+                		mov ax, bx  ;<--;
+                		mov bl, 10d     ;
+                		mul bl          ;<-- ax = 10*ax
+                		mov bx, ax
+
+                		pop ax
+                		add bx, ax
+						jmp $$read_number 
+
+		 $$end_read:    pop ax 
+						ret
+read_num endp
+;============================================
 
 ;============================================
 ; Draw frame 
@@ -90,6 +165,7 @@ Start:	push 30  ; x
 ; Exit:      None
 ; Expects:   Screen size equals 25*80
 ;            ES = 0b800h
+;            SI = begin adress for reading user style and message from cmd line
 ;            There is the mass "frame_styles"
 ;            There is the mass "message"
 ; Destroys:  AX, BX, CX, SI, DI, BP
@@ -97,16 +173,21 @@ Start:	push 30  ; x
 draw_frame  proc
             CLEAR_VIDEO  
             
-            push bp               
+            push bp             
             mov  bp, sp
-	    
+
+            push si
+
 	    	mov si, [bp + 4] ; si = style
 	    	cmp si, 3
 	    	je  $$call_user_style
 	    	jmp $$not_user_style
 	    
-	    	$$call_user_style: 	call user_style
-	    	$$not_user_style:  	call scanf_msg
+	    	$$call_user_style:  pop si
+								call user_style
+								jmp $$msg_scanf
+	    	$$not_user_style:  	pop si
+			$$msg_scanf:        call scanf_msg
 	                       		lea  bx, message
 			       				call strlen
 			       				add  cx, 4 ; cx = width
@@ -116,36 +197,31 @@ draw_frame  proc
 	    
             call calc_crd ; bx = begin coordinate	       
 		    ;=================================		
-			mov di, bx ; di = begin coordinate
+			mov  di, bx ; di = begin coordinate
 
-			mov si, [bp + 4]; si = style
+			mov  si, [bp + 4]; si = style
 			call style_pointer
-
-			mov bx, cx ; bx = width
-			mov cx, 1
-
+			mov  bx, cx ; bx = width
+			mov  cx, 1
 			call draw_line
             ;=================================
-			mov si, [bp + 4]; si = style
+			mov  si, [bp + 4]; si = style
 			call style_pointer
-			add si, 3
-
-			mov cx, [bp + 8]
-			sub cx, 2
-
+			add  si, 3
+			mov  cx, [bp + 8]
+			sub  cx, 2
 			call draw_line
 			;=================================
-			mov si, [bp + 4]; si = style
+			mov  si, [bp + 4]; si = style
 			call style_pointer
-			add si, 6
-
-			mov cx, 1
-
+			add  si, 6
+			mov  cx, 1
 			call draw_line
 			;=================================
 	    	mov bh, [bp + 10] ; bh = y
             mov bl, [bp + 12] ; bl = x
 	    	mov al, [bp + 8]  ; al = heigth
+			mov ah, [bp + 6]  ; ah = color
 	    
             call video_prnt_msg
 	    
@@ -241,7 +317,6 @@ calc_crd 	endp
 include style.asm
 include msg.asm
 include str.asm
-include math.asm
 
 ;============================================
 
@@ -258,12 +333,8 @@ frame_styles  	db 0Dah, 0C4h, 0Bfh ;== style 0 ==;
 	          	db 0C8h, 0CDh, 0BCh ;=============;
 	     
 		  		db 9 dup ('$')      ; memory for user style (style 3)
-	     
-consol_prnt_msg   db "Enter text for the frame: $"
-message           db 100 dup ('$')  ; message for frame
 
-consol_prnt_style db "Enter frame style: $"
-user_style_var    db 10 dup ('$')   ; variable for return hex numbers in a string
+message         db 100 dup ('$')    ; message for frame
 
 ;============================================
 

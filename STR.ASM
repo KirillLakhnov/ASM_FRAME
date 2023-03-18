@@ -15,12 +15,40 @@ strlen proc
 		      
 		              cmp bl, 24h
 		              je  $$end_strlen_loop
-		      
-                            inc cx
+
+                            cmp bl, 5Ch
+                            je  $$do_skip_symbol
+
                             pop bx
+       $$strlen_loop_cont:  inc cx
 		              inc bx
 		      
-		              jmp $$strlen_loop	      
+		              jmp $$strlen_loop	
+
+       $$do_skip_symbol:    pop  bx
+                            add  bx, 3
+                            push bx
+                            mov  bx, [bx]
+                            cmp  bl, 2Fh
+                            jne $$dont_skip_symbol
+                            pop bx
+                            inc bx
+                            jmp $$strlen_loop
+
+       $$dont_skip_symbol:  pop  bx
+                            sub  bx, 2
+                            push bx
+                            mov  bx, [bx]
+                            cmp  bl, 6eh
+                            jmp  $$new_line_skip
+                            pop  bx
+                            dec  bx
+                            jmp  $$strlen_loop_cont
+
+       $$new_line_skip:     pop bx
+                            inc bx
+                            jmp $$strlen_loop
+
        $$end_strlen_loop:   pop bx    
        ret
 strlen endp

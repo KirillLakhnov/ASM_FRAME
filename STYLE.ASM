@@ -48,7 +48,7 @@ style_elem 	endp
 ;============================================
 ; User frame style
 ;============================================
-; Entry:     SI = style frame
+; Entry:     SI = begin adress for reading user style
 ; Exit:      
 ; Expects:   There is the mass "frame_styles"
 ;            There is the mass "consol_prnt"
@@ -56,22 +56,18 @@ style_elem 	endp
 ; Destroys:  AX, BX, DX, SI
 ;============================================
 user_style 	proc
-
-           	mov ah, 09h
-	   		mov dx, offset consol_prnt_style
-	   		int 21h
-		
+		    
+			push si
+			mov si, 3
            	call style_pointer ; si = style_pointer
+			mov di, si
+			pop si
 	   
 	   		mov cx, 9
-	   		$$element_frame_prnt: 	lea  bx, user_style_var
-	                         		call scanf
-				 					lea  bx, user_style_var
-				 					call string_to_hex
-				 					mov  frame_styles + si, al
-				 					inc  si
+	   		$$element_frame_prnt:   call scanf_hex
+				 					mov  frame_styles + di, bl									
+									add  di, 1
 				 					loop $$element_frame_prnt
-				 
            	ret
 user_style 	endp
 ;============================================
@@ -79,74 +75,41 @@ user_style 	endp
 ;============================================
 ; Scanf, while did not enter a space or enter
 ;============================================
-; Entry:     BX = pointer to string
-; Exit:      None
-; Expects:   None
-; Destroys:  AX
-;============================================
-scanf 	proc
-      	$$scanf: 	mov ah, 01h
-               		int 21h
-	      
-	       			cmp al, 0dh
-	       			je  $$end_scanf     
-	       			cmp al, 20h
-	       			je  $$end_scanf
-	      
-	       			mov [bx], al
-	       			inc bx
-	       			jmp $$scanf
-       
-      	$$end_scanf: ret
-scanf 	endp
-;============================================ 
-
-
-;============================================
-; Сonverts the hex number written in the string to a number
-;============================================
-; Entry:     BX = pointer to string
-; Exit:      AL = hex number
-; Expects:   None
+; Entry:     None
+; Exit:      BX = hex value
+; Expects:   SI = begin adress for reading user style
 ; Destroys:  None
 ;============================================
-string_to_hex 	proc
-              	push cx si bx
-	      
-	      		mov cx, 0
-	      		mov ax, 0
-              	$$loop_string_to_hex: 	push bx	                     
-	                            		mov bx, [bx]				    
-				    					xor bh, bh
-				    
-				    					cmp bl, 68h
-				    					je $$end_loop
-				    
-	                            		cmp bl, 39h
-				    					jle $$if_bx_jle_39h
-				    					jmp $$else_bx_jle_39h 
-	      
-	      		$$if_bx_jle_39h: 		sub bl, 30h
-				    					jmp $$end_if_bx_jle_39h
-                                              
-	      		$$else_bx_jle_39h:    	sub bl, 37h
-				    					jmp $$end_if_bx_jle_39h
-                                              
-	      		$$end_if_bx_jle_39h: 
-	      
-	     		mov  si, 16 ; si = 16
-	      		call pow    ; si = 16^cx	      
-	      		mul  si     ; ax = ax*(16^cx)
-	      		add  ax, bx ; ax = bx + ax*(16^cx) 
-	      
-	      		pop bx
-	      		inc bx
-	      		inc cx
-	      		jmp $$loop_string_to_hex
-	      
-	      		$$end_loop: pop bx
-	      
-	      		pop bx si cx	      
-              	ret
-string_to_hex 	endp
-;============================================ 
+scanf_hex 	proc
+			push ax
+
+            xor bx, bx
+
+      	    $$scanf_hex: xor ax, ax
+	                     lodsb
+						
+	       				 cmp al, 2Ch
+	       				 je  $$end_scanf
+
+						 cmp al, 68h
+						 je  $$scanf_hex
+
+						 STR_SYMBOL_TO_HEX
+						
+	       				 push ax
+
+                		 mov ax, bx  ;<--;
+                		 mov bl, 16d     ;
+                		 mul bl          ;<-- ax = 16*ax
+                		 mov bx, ax
+
+                		 pop ax
+                		 add bx, ax
+						 
+	       				 jmp $$scanf_hex
+			
+			$$end_scanf: 
+			pop ax
+			ret
+scanf_hex 	endp
+;============================================  
