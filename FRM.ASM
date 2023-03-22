@@ -157,11 +157,11 @@ read_num endp
 ;============================================
 ; Draw frame 
 ;============================================
-; Entry:     p1 = X-COORDINATE upper left corner
-;	         p2 = Y-COORDINATE upper left corner
-;            p3 = HEIGTH frame
-;            p4 = COLOR  frame
-;            p6 = STYLE  frame
+; Entry:     p1 = X-COORDINATE upper left corner [bp + 12]
+;	         p2 = Y-COORDINATE upper left corner [bp + 10]
+;            p3 = HEIGTH frame [bp + 8]
+;            p4 = COLOR  frame [bp + 6]
+;            p5 = STYLE  frame [bp + 4]
 ; Exit:      None
 ; Expects:   Screen size equals 25*80
 ;            ES = 0b800h
@@ -249,21 +249,17 @@ draw_line	proc
             mov ax, offset frame_styles
 			add si, ax ; pointer to style first symbol - corner
 
+			mov ah, [bp + 6]
+
 $$draw_all: push bx si 
 
-			lodsb           ;<-- draw left corner
-			stosb           ;
-							;
-            mov al, [bp + 6];
-			stosb		;<--;
+			lodsb         ;<-- draw left corner
+			stosw     ;<--;
 
 			$$draw_line: 	push si				;<-- draw line
 			                lodsb				;
-			             	stosb           	;
+			             	stosw           	;
 					        pop  si				;
-												;
-                        	mov al, [bp + 6]    ;
-			            	stosb				;
 												;
 						    dec bx				;
 							cmp bx, 0			;
@@ -271,10 +267,7 @@ $$draw_all: push bx si
 
             inc si          ;<-- draw rigth corner
 			lodsb           ;
-			stosb           ;
-							;
-            mov al, [bp + 6];
-			stosb		;<--;
+			stosw		;<--;
 
             pop si bx
 			

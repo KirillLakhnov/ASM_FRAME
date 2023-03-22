@@ -66,10 +66,10 @@ strlen endp
 ; Destroys:  SI, BX
 ;===========================================
 strcmp proc
-
        dec  bx
        dec  si
        push bx si
+
        $$strcmp_loop:       pop  si bx
                             inc  bx
 		              inc  si
@@ -89,6 +89,7 @@ strcmp proc
 		              jmp $$end_strcmp_loop
 		      
        $$end_strcmp_loop:   sub cl, bl
+       
        pop si bx
        ret
 strcmp endp

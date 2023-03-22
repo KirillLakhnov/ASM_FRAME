@@ -85,30 +85,30 @@ scanf_hex 	proc
 
             xor bx, bx
 
-      	    $$scanf_hex: xor ax, ax
-	                     lodsb
+      	    $$scanf_hex: 	xor ax, ax
+	                     	lodsb
 						
-	       				 cmp al, 2Ch
-	       				 je  $$end_scanf
+	       				 	cmp al, 2Ch
+	       				 	je  $$end_scanf
 
-						 cmp al, 68h
-						 je  $$scanf_hex
+						 	cmp al, 68h
+						 	je  $$scanf_hex
 
-						 STR_SYMBOL_TO_HEX
+						 	STR_SYMBOL_TO_HEX
 						
-	       				 push ax
+	       				 	push ax
 
-                		 mov ax, bx  ;<--;
-                		 mov bl, 16d     ;
-                		 mul bl          ;<-- ax = 16*ax
-                		 mov bx, ax
+                		 	mov ax, bx  ;<--;
+                		 	mov bl, 16d     ;
+                		 	mul bl          ;<-- ax = 16*ax
+                		 	mov bx, ax
 
-                		 pop ax
-                		 add bx, ax
+                		 	pop ax
+                		 	add bx, ax
 						 
-	       				 jmp $$scanf_hex
-			
+	       				 	jmp $$scanf_hex			
 			$$end_scanf: 
+			
 			pop ax
 			ret
 scanf_hex 	endp
